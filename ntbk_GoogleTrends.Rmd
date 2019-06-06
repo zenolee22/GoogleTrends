@@ -1,0 +1,110 @@
+---
+title: "Marketing Google Trends"
+output: html_notebook
+---
+
+
+```{r Libraries, eval=TRUE, message=FALSE}
+library(dplyr)
+library(data.table)
+library(gtrendsR)
+library(ggplot2)
+```
+
+```{r}
+hurricanes <- gtrends(c("katrina","harvey"), time = "all", gprop = "web", geo = c("US"))
+hurricanes %>% glimpse()
+```
+
+```{r}
+my_theme <- function() {
+    theme_bw() +
+    theme(panel.background = element_blank()) +
+    theme(plot.background = element_rect(fill = "seashell")) +
+    theme(panel.border = element_blank()) +                     # facet border
+    theme(strip.background = element_blank()) +                 # facet title background
+    theme(plot.margin = unit(c(.5, .5, .5, .5), "cm")) +
+    theme(panel.spacing = unit(3, "lines")) +
+    theme(panel.grid.major = element_blank()) +
+    theme(panel.grid.minor = element_blank()) +
+    theme(legend.background = element_blank()) +
+    theme(legend.key = element_blank()) +
+    theme(legend.title = element_blank())
+  }
+```
+
+
+```{r}
+library(plotly)
+library(dplyr)
+library(sqldf)
+library(reshape2)
+
+```
+
+```{r}
+date6mthpast <- Sys.Date() - 180 
+startdate <- paste0( substr(as.character(date6mthpast), 1,7), "-01", sep = "")
+currdate <- as.character(Sys.Date())
+timeframe <- paste( startdate, currdate)
+keywords <- c("AAA") 
+country<-c("US")
+channel<-"web"
+```
+
+```{r}
+df.statefarm <- gtrends("State Farm", gprop =channel,geo=country, time = timeframe )
+df.farmers <- gtrends("Farmers", gprop =channel,geo=country, time = timeframe )
+df.progressive <- gtrends("Progressive", gprop =channel,geo=country, time = timeframe )
+df.geico <- gtrends("Geico", gprop =channel,geo=country, time = timeframe )
+df.aaa <- gtrends("AAA", gprop =channel,geo=country, time = timeframe )
+
+```
+
+
+```{r}
+ggplot(data=trends$interest_over_time, aes(x=date, y=hitval, group=keyword, col=keyword))+ 
+geom_line()+xlab("Time")+ylab("Relative Interest")+ theme_bw() +
+theme(legend.title = element_blank(), legend.position="bottom", legend.text=element_text(size=12)) +
+ggtitle("Google Search Volume over time")
+
+```
+
+```{r}
+head(trends$interest_over_time)
+```
+
+```{r}
+df.temp.aaa <- df.aaa$interest_over_time
+df.temp.statefarm <- df.statefarm$interest_over_time
+df.temp.progressive <- df.progressive$interest_over_time
+
+df.temp.aaa <- df.temp.aaa %>% mutate(YrMonth=ifelse(month(date) < 10, paste0(year(date),"0",month(date)),paste0(year(date),month(date)))) 
+
+df.temp.statefarm <- df.temp.statefarm %>% mutate(YrMonth=ifelse(month(date) < 10, paste0(year(date),"0",month(date)),paste0(year(date),month(date)))) 
+
+df.temp.progressive <- df.temp.progressive %>% mutate(YrMonth=ifelse(month(date) < 10, paste0(year(date),"0",month(date)),paste0(year(date),month(date)))) 
+
+df.temp2.aaa <- df.temp.aaa %>% group_by(YrMonth, keyword) %>% summarize(index=mean(hits))
+df.temp2.statefarm <- df.temp.statefarm %>% group_by(YrMonth, keyword) %>% summarize(index=mean(hits))
+df.temp2.progressive <- df.temp.progressive %>% group_by(YrMonth, keyword) %>% summarize(index=mean(hits))
+
+plot_ly(x=df.temp2.aaa$YrMonth
+        ,y=df.temp2.aaa$index
+        ,type="scatter"
+        ,mode="lines"
+        ,name="AAA") %>%
+  add_trace(x=df.temp2.statefarm$YrMonth
+        ,y=df.temp2.statefarm$index
+        ,name="State Farm") %>%
+  add_trace(x=df.temp2.progressive$YrMonth
+            ,y=df.temp2.progressive$index
+            ,name="Progressive") %>%
+  layout(title="Average Index over Time")
+  
+```
+
+```{r}
+head(trends$interest_by_dma)
+```
+
