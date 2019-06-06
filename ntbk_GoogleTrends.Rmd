@@ -105,6 +105,10 @@ plot_ly(x=df.temp2.aaa$YrMonth
 ```
 
 ```{r}
-head(trends$interest_by_dma)
+head(df.aaa$interest_by_dma)
+```
+
+```{r}
+head(df.progressive$interest_by_dma)
 ```
 
